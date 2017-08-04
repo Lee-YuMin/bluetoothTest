@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2013 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.rtls.hatio.rtls_mobile_test;
 
 import android.app.Service;
@@ -14,13 +30,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
-import android.os.ParcelUuid;
 import android.util.Log;
 
 import java.util.List;
 import java.util.UUID;
 
-public class BluetoothLeService extends Service{
+/**
+ * Service for managing connection and data communication with a GATT server hosted on a
+ * given Bluetooth LE device.
+ */
+public class BluetoothLeService extends Service {
     private final static String TAG = BluetoothLeService.class.getSimpleName();
 
     private BluetoothManager mBluetoothManager;
@@ -34,27 +53,18 @@ public class BluetoothLeService extends Service{
     private static final int STATE_CONNECTED = 2;
 
     public final static String ACTION_GATT_CONNECTED =
-            "android-er.ACTION_GATT_CONNECTED";
+            "ACTION_GATT_CONNECTED";
     public final static String ACTION_GATT_DISCONNECTED =
-            "android-er.ACTION_GATT_DISCONNECTED";
+            "ACTION_GATT_DISCONNECTED";
     public final static String ACTION_GATT_SERVICES_DISCOVERED =
-            "android-er.ACTION_GATT_SERVICES_DISCOVERED";
+            "ACTION_GATT_SERVICES_DISCOVERED";
     public final static String ACTION_DATA_AVAILABLE =
-            "android-er.ACTION_DATA_AVAILABLE";
+            "ACTION_DATA_AVAILABLE";
     public final static String EXTRA_DATA =
-            "android-er.EXTRA_DATA";
+            "EXTRA_DATA";
 
-    public static String String_GENUINO101_ledService =
-            "19B10000-E8F2-537E-4F6C-D104768A1214";
-    public final static ParcelUuid ParcelUuid_GENUINO101_ledService =
-            ParcelUuid.fromString(String_GENUINO101_ledService);
-    public final static UUID UUID_GENUINO101_ledService =
-            UUID.fromString(String_GENUINO101_ledService);
-
-    public static String String_GENUINO101_switchChar =
-            "19B10001-E8F2-537E-4F6C-D104768A1214";
-    public final static UUID UUID_GENUINO101_switchChare =
-            UUID.fromString(String_GENUINO101_switchChar);
+    public final static UUID UUID_HEART_RATE_MEASUREMENT =
+            UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
 
     // Implements callback methods for GATT events that the app cares about.  For example,
     // connection change and services discovered.
@@ -113,11 +123,9 @@ public class BluetoothLeService extends Service{
                                  final BluetoothGattCharacteristic characteristic) {
         final Intent intent = new Intent(action);
 
-        /*
         // This is special handling for the Heart Rate Measurement profile.  Data parsing is
         // carried out as per profile specifications:
-        // http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx
-        // ?u=org.bluetooth.characteristic.heart_rate_measurement.xml
+        // http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.heart_rate_measurement.xml
         if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
             int flag = characteristic.getProperties();
             int format = -1;
@@ -141,25 +149,6 @@ public class BluetoothLeService extends Service{
                 intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
             }
         }
-        */
-
-        //remove special handling for time being
-        Log.w(TAG, "broadcastUpdate()");
-
-        final byte[] data = characteristic.getValue();
-
-        Log.v(TAG, "data.length: " + data.length);
-
-        if (data != null && data.length > 0) {
-            final StringBuilder stringBuilder = new StringBuilder(data.length);
-            for(byte byteChar : data) {
-                stringBuilder.append(String.format("%02X ", byteChar));
-
-                Log.v(TAG, String.format("%02X ", byteChar));
-            }
-            intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
-        }
-
         sendBroadcast(intent);
     }
 
@@ -217,8 +206,7 @@ public class BluetoothLeService extends Service{
      *
      * @return Return true if the connection is initiated successfully. The connection result
      *         is reported asynchronously through the
-     *         {@code BluetoothGattCallback#onConnectionStateChange(
-     *         android.bluetooth.BluetoothGatt, int, int)}
+     *         {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
      *         callback.
      */
     public boolean connect(final String address) {
@@ -256,8 +244,7 @@ public class BluetoothLeService extends Service{
     /**
      * Disconnects an existing connection or cancel a pending connection. The disconnection result
      * is reported asynchronously through the
-     * {@code BluetoothGattCallback#onConnectionStateChange(
-     * android.bluetooth.BluetoothGatt, int, int)}
+     * {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
      * callback.
      */
     public void disconnect() {
@@ -282,8 +269,7 @@ public class BluetoothLeService extends Service{
 
     /**
      * Request a read on a given {@code BluetoothGattCharacteristic}. The read result is reported
-     * asynchronously through the {@code BluetoothGattCallback#onCharacteristicRead(
-     * android.bluetooth.BluetoothGatt, android.bluetooth.BluetoothGattCharacteristic, int)}
+     * asynchronously through the {@code BluetoothGattCallback#onCharacteristicRead(android.bluetooth.BluetoothGatt, android.bluetooth.BluetoothGattCharacteristic, int)}
      * callback.
      *
      * @param characteristic The characteristic to read from.
@@ -310,10 +296,10 @@ public class BluetoothLeService extends Service{
         }
         mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
 
-        // This is specific to Genuino 101 ledService.
-        if (UUID_GENUINO101_ledService.equals(characteristic.getUuid())) {
+        // This is specific to Heart Rate Measurement.
+        if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
-                    UUID_GENUINO101_switchChare);
+                    UUID.fromString(SampleGattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
             descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
             mBluetoothGatt.writeDescriptor(descriptor);
         }
