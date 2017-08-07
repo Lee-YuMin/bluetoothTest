@@ -39,6 +39,19 @@ public class SampleGattAttributes {
         attributes.put("00001800-0000-1000-8000-00805f9b34fb", "Generic Access");
         attributes.put("00001801-0000-1000-8000-00805f9b34fb", "Generic Attribute");
         attributes.put("00001523-1212-efde-1523-785feabcd123", "Nordic LED Button Service");
+
+        // nRF Characteristic.
+        attributes.put("00002a00-0000-1000-8000-00805f9b34fb", "Device Name");
+        attributes.put("00002a01-0000-1000-8000-00805f9b34fb", "Appearance");
+        attributes.put("00002a04-0000-1000-8000-00805f9b34fb", "Peripheral Preferred Connection Parameters");
+        attributes.put("00002aa6-0000-1000-8000-00805f9b34fb", "Central Address Resolution");
+
+        attributes.put("00002a05-0000-1000-8000-00805f9b34fb", "Service Changed");
+        attributes.put("00002902-0000-1000-8000-00805f9b34fb", "Descriptors");
+
+        attributes.put("00001524-1212-efde-1523-785feabcd123", "Button");
+        attributes.put("00001525-1212-efde-1523-785feabcd123", "LED");
+
     }
 
     public static String lookup(String uuid, String defaultName) {
